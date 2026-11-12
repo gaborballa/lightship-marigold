@@ -1,0 +1,11 @@
+import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import { createRequire } from 'node:module';
+const require = createRequire(process.env.TOOLS + '/'); const { chromium } = require('playwright');
+const root = path.resolve(new URL('..', import.meta.url).pathname);
+const srv = http.createServer((q, s) => { const f = path.join(root, decodeURIComponent(q.url.split('?')[0])); fs.readFile(f, (e, d) => { if (e) { s.writeHead(404); s.end(); return; } s.writeHead(200, { 'content-type': f.endsWith('.js') ? 'text/javascript' : f.endsWith('.html') ? 'text/html' : 'application/octet-stream' }); s.end(d); }); }).listen(0);
+const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] });
+const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+await page.goto(`http://localhost:${srv.address().port}/index.html?seed=2`); await page.waitForFunction('window.__stats && window.__stats.frame > 30'); await page.waitForTimeout(400);
+await page.mouse.move(960, 540); await page.keyboard.press('KeyE'); await page.waitForTimeout(700);
+await page.mouse.down(); await page.waitForTimeout(650); await page.screenshot({ path: root + '/shots/r3_charge.png' }); await page.mouse.up(); await page.waitForTimeout(60); await page.screenshot({ path: root + '/shots/r3_fired.png' });
+await page.waitForTimeout(260); await page.screenshot({ path: root + '/shots/r3_hit.png' });
+await browser.close(); srv.close();

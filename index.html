@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lightship Marigold</title>
+<link rel="icon" href="data:,">
+<style>
+  html, body { margin: 0; height: 100%; background: #060504; overflow: hidden; }
+  body { font-family: "Futura", "Avenir Next Condensed", "Helvetica Neue", Arial, sans-serif; color: #efe6c8; -webkit-user-select: none; user-select: none; cursor: crosshair; }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .hud { position: fixed; pointer-events: none; text-shadow: 0 1px 6px rgba(0, 0, 0, .8); opacity: 0; transition: opacity .6s; }
+  body.ready .hud { opacity: 1; }
+  #top { left: 0; top: 0; padding: 16px 60px 26px 22px; max-width: 62vw; background: radial-gradient(ellipse 100% 100% at 0 0, rgba(6, 5, 4, .6), rgba(6, 5, 4, 0) 72%); }
+  #title { font-size: 15px; letter-spacing: .28em; text-transform: uppercase; opacity: .82; }
+  #hint { font-size: 12.5px; letter-spacing: .04em; opacity: .62; margin-top: 5px; line-height: 1.35; }
+  #goal { font-size: 14px; letter-spacing: .05em; margin-top: 9px; color: #f6c35a; opacity: .95; }
+  #left { left: 22px; bottom: 22px; }
+  #score { font-family: "Rockwell", "Courier New", serif; font-size: 34px; letter-spacing: .14em; color: #efe6c8; background: rgba(8, 7, 6, .55); padding: 2px 10px 0; border-radius: 3px; display: inline-block; border: 1px solid rgba(239, 230, 200, .18); }
+  #credits { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+  #credits b { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, #fff 0 6%, #cfd3d6 14%, #6d7479 46%, #23272a 72%, #8d949a 100%); box-shadow: 0 2px 5px rgba(0, 0, 0, .7); transition: opacity .4s, transform .4s; }
+  #credits b.off { opacity: .16; transform: scale(.7); }
+  #credits span { font-size: 11px; letter-spacing: .2em; opacity: .55; text-transform: uppercase; margin-left: 4px; }
+  #letters { margin-top: 10px; display: flex; gap: 5px; }
+  #letters i { font-style: normal; font-weight: 700; font-size: 13px; width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 50%; color: rgba(0, 0, 0, .7); background: #4a4336; box-shadow: inset 0 0 0 1.5px #151210; transition: background .25s, box-shadow .25s; text-shadow: none; }
+  #letters i.on.b0 { background: #ffb23a; box-shadow: inset 0 0 0 1.5px #151210, 0 0 14px #ffb23a; }
+  #letters i.on.b1 { background: #ff5a40; box-shadow: inset 0 0 0 1.5px #151210, 0 0 14px #ff5a40; }
+  #letters i.on.b2 { background: #4fe08a; box-shadow: inset 0 0 0 1.5px #151210, 0 0 14px #4fe08a; }
+  #timer { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: #ff8a6a; margin-top: 8px; height: 14px; }
+  #aim { left: 50%; top: 50%; width: 12px; height: 12px; margin: -7px 0 0 -7px; border: 1px solid rgba(255, 255, 255, .42); border-radius: 50%; }
+  #aim::after { content: ""; position: absolute; left: 5px; top: 5px; width: 2px; height: 2px; background: rgba(255, 255, 255, .75); border-radius: 50%; }
+  #msg { left: 0; right: 0; top: 62%; text-align: center; font-size: 19px; letter-spacing: .14em; text-transform: uppercase; opacity: 0 !important; transition: opacity .35s; }
+  body.ready #msg.on { opacity: .95 !important; }
+  #pop { left: 0; right: 0; top: 43%; text-align: center; font-size: 15px; letter-spacing: .16em; text-transform: uppercase; color: #f6c35a; opacity: 0 !important; }
+  #pop.go { animation: pop 1.1s ease-out; }
+  @keyframes pop { 0% { opacity: 1; transform: translateY(6px); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
+  #attract { right: 22px; bottom: 20px; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; opacity: 0 !important; }
+  body.ready.attract #attract { opacity: .75 !important; }
+  body.view #aim, body.view #attract { display: none; }
+  #snd { position: fixed; right: 20px; top: 16px; font: inherit; font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase; color: #efe6c8; background: rgba(10, 9, 8, .6); border: 1px solid rgba(239, 230, 200, .5); border-radius: 3px; padding: 8px 14px; cursor: pointer; }
+  #snd:hover { background: rgba(239, 230, 200, .16); } #snd.on { border-color: #f6c35a; color: #f6c35a; }
+  #end { inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 9vh; background: linear-gradient(to top, rgba(6, 5, 4, .7), rgba(6, 5, 4, 0) 42%); opacity: 0 !important; transition: opacity 1s; }
+  body.ready #end.on { opacity: 1 !important; }
+  #end h1 { font-size: 44px; letter-spacing: .2em; text-transform: uppercase; margin: 0; font-weight: 700; color: #f6c35a; }
+  #end p { font-size: 15px; letter-spacing: .14em; margin: 12px 0 0; opacity: .85; }
+</style>
+<script type="importmap">{ "imports": { "three": "./game/lib/three.module.js" } }</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="top" class="hud"><div id="title">Lightship Marigold</div>
+  <div id="hint">W A S D walk · click takes the pointer, Esc gives it back · right-drag or arrow keys also look · hold the left button to pull the spring, release to fire</div>
+  <div id="goal"></div></div>
+<div id="left" class="hud"><div id="score">00000</div><div id="letters"></div><div id="credits"></div><div id="timer"></div></div>
+<div id="aim" class="hud"></div>
+<div id="pop" class="hud"></div>
+<div id="msg" class="hud"></div>
+<div id="attract" class="hud">Attract mode · move the mouse or press a key to play</div>
+<div id="end" class="hud"><h1>The Marigold is lit</h1><p id="endline"></p><p>Click or press R to play again</p></div>
+<button id="snd">Enable sound</button>
+<script type="module" src="game/main.js"></script>
+</body>
+</html>
